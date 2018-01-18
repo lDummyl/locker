@@ -15,6 +15,12 @@ public class Main {
 	
 	public static void main (String [] Args){
 		
+		try {
+			Sql_communication.createTable();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+	
 		setWindow(new MainWindow(640,480));
 		
 		
@@ -35,9 +41,7 @@ public class Main {
 	}	
 	public static void saveImage (File file, String format){
 		try {
-			
 			ImageIO.write(image, format, file);
-
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Наебываемся");
 			//e.printStackTrace();
