@@ -2,12 +2,33 @@ package ru.ludovinc.crm_proj_sales;
 
 public class Client {
 	
+	private String currentCompany;
 	public String naming;
 	private String address;
 	private String region;
 	private String eMail;
 	private String phone;
+	private String direction;
 	
+	public final  String [] properties = {
+			"Название",
+			"Адрес",
+			"Регион",
+			"E-mail",
+			"Телефон",
+			"Осн. направление"};
+	
+	public String[][] getTableVal(){
+		String[][] arr = {
+				{properties[0], this.naming},
+				{properties[1], this.address},
+				{properties[2], this.region},
+				{properties[3], this.eMail},
+				{properties[4], this.phone},
+				{properties[5], this.direction}
+				};
+		return arr; 
+	}
 	
 	public String getAddress() {
 		return address;
@@ -38,6 +59,12 @@ public class Client {
 	}
 	public void setPhone(String phone) {
 		this.phone = phone;
+	}
+	public void setDirection(String direction) {
+		this.direction = direction;
+	}
+	public String getDirection() {
+		return direction;
 	}
 	
 }

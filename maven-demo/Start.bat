@@ -1,2 +1,2 @@
 @echo off
-java -jar crm.jar
+java -jar DriverCrm.jar

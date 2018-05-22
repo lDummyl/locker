@@ -1,13 +1,16 @@
 package ru.ludovinc.crm_proj_sales;
 
-public class Employer {
+public class Employee {
 
+	
 	private String name;
 	private String position;
 	private String phone;
 	private String email;
 	private String company;
 	private int id;
+	
+
 	
 	public String getName() {
 		return name;

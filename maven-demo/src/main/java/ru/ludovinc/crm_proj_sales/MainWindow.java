@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
@@ -36,11 +37,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
+import javax.swing.SpinnerListModel;
+import javax.swing.SpinnerModel;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.FileUtils;
 
 import net.miginfocom.swing.MigLayout;
+import javax.swing.JDesktopPane;
+import javax.swing.JSpinner;
 //import ru.ldinc.main33.Main;
 
 @SuppressWarnings("serial")
@@ -73,25 +79,21 @@ public class MainWindow extends JFrame {
 	private JScrollPane scrollPane;
 	private JTextPane textPaneHints;
 	private ImageIcon imageIcon;
-	private JTable table_employers;
-	private JScrollPane scrollPane_3;
 	private JButton btnNewButton_base_add;
 	private JComboBox comboBox_type_of_journal;
+	private JSpinner spinner;
 	
 
 	public MainWindow(int width, int height) {
 	
 		imageIcon = new ImageIcon("DE_logo.png");
 		setIconImage(imageIcon.getImage());
-		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
-		
-		
 		setSize(468, 428);
 		getContentPane().setLayout(new MigLayout("", "[432px]", "[329px]"));
-
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		setLocationRelativeTo(null);
+		
 		getContentPane().add(tabbedPane, "cell 0 0,grow");
 		
 		panel1 = new JPanel(null);
@@ -102,17 +104,12 @@ public class MainWindow extends JFrame {
 		btnChooseFile.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		btnChooseFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				try {
-					FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/VBA_PDF"));
-					FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
-				// вычищаем шлюзы	
-				} catch (IOException e) {
-					e.printStackTrace();
-					JOptionPane.showMessageDialog(rootPane, "Закройте фаилы в рабочих папках");
-				}
+				clearFolders(new File(Main.absolut.getAbsolutePath()+"/VBA_PDF"));
+				clearFolders(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
 				File requestDownloadDirectory = new File("C:\\Users\\805268\\Downloads");
 				JFileChooser chooser = new JFileChooser(requestDownloadDirectory);
 				FileNameExtensionFilter filter = new FileNameExtensionFilter("Adobe Acrobat file", "pdf");
+				
 				chooser.setFileFilter(filter);
 				int reply = chooser.showOpenDialog(null);
 				if(reply == JFileChooser.APPROVE_OPTION){
@@ -126,6 +123,7 @@ public class MainWindow extends JFrame {
 						e.printStackTrace();
 					}
 				}	
+				try{Thread.sleep(5000);} catch (InterruptedException e){}
 				panel1.add(btnNewButton);
 				panel1.updateUI();;
 				//
@@ -148,12 +146,14 @@ public class MainWindow extends JFrame {
 					JOptionPane.showMessageDialog(rootPane, "Не найден фаил для распознания, завершите работу с Acrobat. Инструменты/Pdf_to_Xls/Начало");
 					return;
 				}
-				VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"!PickTheDataFileAuto","!Main"});
+//				VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"!PickTheDataFileAuto","!Main"});
 				SideApp.runExcel();
 			}
 		});
 		btnNewButton.setBounds(10, 63, 186, 41);
-		//panel1.add(btnNewButton);
+		panel1.add(btnNewButton);
+		panel1.updateUI();;
+		
 		
 		final JButton btnSave = new JButton("Сохранить проект");
 		btnSave.setForeground(new Color(47, 79, 79));
@@ -161,32 +161,47 @@ public class MainWindow extends JFrame {
 		btnSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
+					
+					if (!new File(Main.absolut.getAbsolutePath()+"/dep_gateway/offer.xls").exists())
+					{
+						JOptionPane.showMessageDialog(null, "КП не найдено.");
+						return ;
+					}	
 					int selection = JOptionPane.showConfirmDialog(btnSave, "Создать новый проект?");
-					if (selection ==0){
-						TxtWriter.writeOfferComment(JOptionPane.showInputDialog("Комментарии к предложению"));
-						VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"!SaveToAuto"});
-						SpreadSheets.journalInsert(ExcelAPI.getOfferData());
-						JOptionPane.showMessageDialog(null, "Журнал дополнен.");
-						textPaneHints.setText("В журнал занаесена строка и создана папка с запросом и предложением. Вы можете начать новый проект.");
-						panel1.updateUI();
-						FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
-					}
-					if (selection ==1){
-						String projectId = JOptionPane.showInputDialog("Введите номер изменяемого проекта.");
-						if (projectId == null){return;}
-						TxtWriter.writeOfferComment(JOptionPane.showInputDialog("Комментарии к предложению"));
-						VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"!SaveToAuto"});
-						SpreadSheets.journalInsertChange(ExcelAPI.getOfferData(), projectId);
-						JOptionPane.showMessageDialog(null, "Архив дополнен.");
-						textPaneHints.setText("Ваш проект id " + projectId + " дополнен.");
-						panel1.updateUI();
-						FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
-					}
+					
+					if (selection ==0){NewProjectPlasementToBase();}
+					if (selection ==1){ProjectModificationPlasementToBase();}
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+			}
+
+			private void ProjectModificationPlasementToBase() throws IOException, Exception {
+				
+				String projectId = JOptionPane.showInputDialog("Введите номер изменяемого проекта.");
+				if (projectId == null){return;}
+				TxtWriter.writeOfferComment(JOptionPane.showInputDialog("Комментарии к предложению"));
+//				VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"SaveToAuto"});
+				SpreadSheets.journalInsertChange(ExcelAPI.getOfferData(), projectId);
+				JOptionPane.showMessageDialog(null, "Архив дополнен.");
+				textPaneHints.setText("Ваш проект id " + projectId + " дополнен.");
+				panel1.updateUI();
+				FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
+			}
+
+			private void NewProjectPlasementToBase() throws IOException, Exception {
+			
+				TxtWriter.writeOfferComment(JOptionPane.showInputDialog("Комментарии к предложению"));
+				String projectName = JOptionPane.showInputDialog("Наименование проекта");
+//				VBAMaros.callExcelMacro(new File("batch_calculator.xlsm"), new String[] {"SaveToAuto"});
+				SpreadSheets.journalInsert(ExcelAPI.getOfferData(), projectName);
+				JOptionPane.showMessageDialog(null, "Журнал дополнен.");
+				textPaneHints.setText("В журнал занаесена строка и создана папка с запросом и предложением. Вы можете начать новый проект.");
+				panel1.updateUI();
+				FileUtils.cleanDirectory(new File(Main.absolut.getAbsolutePath()+"/dep_gateway/"));
 			}
 		});
 		btnSave.setBounds(10, 115, 186, 41);
@@ -203,14 +218,12 @@ public class MainWindow extends JFrame {
 		textPaneHints.setText("Прежде всего выберите фаил, содержайщий запрос в формате "
 				+ "  \".pdf\". Программа запустит Акробат, в котором потребуется запустить макрос Xls_to_Pdf. "
 				+ "По окончании процедуры можно закрыть Акробат и нажать конпку \"Распознать\".");
-	
-		comboBox_type_of_journal = new JComboBox<String>(SpreadSheets.ARCHIVE_ID_ar[0]); // в первой части содержится название журнала, во второй ссылки на Журнал, в третей на диск
+		comboBox_type_of_journal = new JComboBox<String>(); // в первой части содержится название журнала, во второй ссылки на Журнал, в третей на диск
+		comboBox_type_of_journal.addItem(WorkJournal.selectionName);
+		comboBox_type_of_journal.addItem(TestJournal.selectionName);
 		comboBox_type_of_journal.setBounds(32, 273, 164, 20);
 		panel1.add(comboBox_type_of_journal);
-		comboBox_type_of_journal.getSelectedIndex();
-		panel1.updateUI();
-
-		
+		panel1.updateUI();		
 		
 		panel2 = new JPanel(null);
 		tabbedPane.addTab("Tab 2", panel2);
@@ -243,18 +256,19 @@ public class MainWindow extends JFrame {
 		btnAddClient.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				
-				
 				CollectingClientData();
 				panel3.updateUI();
 			}
 		});
+		
 		panel3.add(btnAddClient);
 		scrollPane_2 = new JScrollPane();
-		scrollPane_2.setBounds(10, 11, 253, 282);
+		scrollPane_2.setBounds(10, 11, 253, 114);
 		panel3.add(scrollPane_2);
 		clModel = new ClientModel();
 		table = new JTable(clModel);
 		scrollPane_2.setViewportView(table);
+		
 		
 		//поле поиска, через что мы ищем.
 		comboBox = new JComboBox<String>();
@@ -324,16 +338,6 @@ public class MainWindow extends JFrame {
 		
 		panel3.add(searchTextPane);
 		
-		scrollPane_3 = new JScrollPane();
-		scrollPane_3.setBounds(10, 117, 253, 176);
-		panel3.add(scrollPane_3);
-		
-		table_employers = new JTable();
-		
-///////////////		
-		
-		scrollPane_3.setViewportView(table_employers);
-		
 		btnNewButton_base_add = new JButton("Доб. в Базу");
 		btnNewButton_base_add.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -356,6 +360,52 @@ public class MainWindow extends JFrame {
 		});
 		btnNewButton_base_add.setBounds(273, 194, 130, 23);
 		panel3.add(btnNewButton_base_add);
+		
+		spinner = new JSpinner();
+		//прокрутка клиентов предполагаемая
+		spinner.setBounds(10, 130, 253, 20);
+		
+		spinner.setModel(new SpinnerModel() {
+			
+			@Override
+			public void setValue(Object arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void removeChangeListener(ChangeListener arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public Object getValue() {
+				// TODO Auto-generated method stub
+				return 1;
+			}
+			
+			@Override
+			public Object getPreviousValue() {
+				// TODO Auto-generated method stub
+				return 2;
+			}
+			
+			@Override
+			public Object getNextValue() {
+				// TODO Auto-generated method stub
+				return 3;
+			}
+			
+			@Override
+			public void addChangeListener(ChangeListener arg0) {
+				// TODO Auto-generated method stub
+				arg0.stateChanged(null);
+			}
+		});
+		
+		panel3.add(spinner);
+		
 		
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -385,17 +435,19 @@ public class MainWindow extends JFrame {
 	}
 	protected void CollectingClientData() {
 		// collection of customer data
-		String naming = JOptionPane.showInputDialog("Наименоавание:");
-		String address = JOptionPane.showInputDialog("Адрес:");
-		String region = JOptionPane.showInputDialog("Регион:");
-		String phone = JOptionPane.showInputDialog("Телефон:");
-		String email = JOptionPane.showInputDialog("E-mail:");
+		String naming = JOptionPane.showInputDialog(Main.client.properties[0]);
+		String address = JOptionPane.showInputDialog(Main.client.properties[1]);
+		Object region = JOptionPane.showInputDialog(null, Main.client.properties[2], null, JOptionPane.QUESTION_MESSAGE, null, new String []{"СЗФО","ЦФО","ЮФО","Северо-Кавказский ФО", "Приволжский ФО", "Уральский ФО", "Сибирский ФО", "ДВФО"}, null);
+		String phone = JOptionPane.showInputDialog(Main.client.properties[3]);
+		String email = JOptionPane.showInputDialog(Main.client.properties[4]);
+		Object direction = JOptionPane.showInputDialog(null, Main.client.properties[5], null, JOptionPane.QUESTION_MESSAGE, null, new String []{"Подрядчик","Производитель","Заказчик/застройщик/девелопер","Проектировщик", "Дилер", "КНС"}, null);
+		
 		Main.client.setNaming(naming);
 		Main.client.setAddress(address);
-		Main.client.setRegion(region);
+		Main.client.setRegion(region.toString());
 		Main.client.setPhone(phone);
 		Main.client.seteMail(email);
-		
+		Main.client.setDirection(direction.toString());
 //		try {
 //			Sql_communication.post();
 //		} catch (Exception e) {
@@ -403,6 +455,9 @@ public class MainWindow extends JFrame {
 //		}
 		
 	}
+
+	
+	
 	protected void UploadTheLogo(Object selection, Object options[]) {
 		// different ways of setting logo
 		if (selection == options[0]){
@@ -435,5 +490,18 @@ public class MainWindow extends JFrame {
 	 public BufferedImage cropImage(BufferedImage src, Rectangle rect) {
 	 BufferedImage dest = src.getSubimage(0, 0, rect.width, rect.height);
 	      return dest; 
+	 }
+	 
+	 public String getComboBox_type_of_journal(){
+		
+		 return String.valueOf(comboBox_type_of_journal.getSelectedItem());
+	 }
+	 public void clearFolders(File f){
+		try {		
+			FileUtils.cleanDirectory(f);
+		} catch (IOException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(rootPane, "Закройте фаилы в рабочих папках");
+		}
 	 }
 }

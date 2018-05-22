@@ -19,7 +19,7 @@ public class SideApp {
 	public static void runExcel() {
 		
 		String AcrobatPath = "C:/Program Files/Microsoft Office/Office15"; // нужно создать в настройках сохранение пути к акробату
-		String xlsPath = "C:/Users/805268/workspace/maven-demo/batch_calculator.xlsm";
+		String xlsPath = Main.absolut.getAbsolutePath()+"/batch_calculator.xlsm";
 		
 		File acrobatDir = new File(AcrobatPath);
 		String command = "cmd /c start EXCEL.exe" + " " + xlsPath + "";

@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import javax.swing.JOptionPane;
+
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -16,14 +18,20 @@ public class ExcelAPI {
 	public static OfferGeneral getOfferData() throws IOException {
 		OfferGeneral offerGeneral = new OfferGeneral();
 		//String[] pack = new String[3];
-		String projPath = "C:\\Users\\805268\\workspace\\maven-demo";
+		String projPath = Main.absolut.getAbsolutePath();
+		
 		FileInputStream xlsOffer = new FileInputStream(projPath+"\\dep_gateway\\offer.xls");
 		Workbook wb = new HSSFWorkbook(xlsOffer);
 		//Sheet Offer = wb.getSheetAt(0);
 		String requestName = wb.getSheetAt(0).getRow(10).getCell(1).getStringCellValue();
+		String customerName = wb.getSheetAt(0).getRow(11).getCell(1).getStringCellValue();
+		if (customerName == null || customerName.equals("")){
+			customerName = JOptionPane.showInputDialog("Поле заказчик в КП не заполнено, ввдеите наименование в поле ниже");
+		}
 		System.out.println(requestName);
 		offerGeneral.requestName = requestName;
 		offerGeneral.Summ = getSumm(wb);
+		offerGeneral.customerName = customerName; 		
 		xlsOffer.close();
 		return offerGeneral;
 		
